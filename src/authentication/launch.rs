@@ -1,4 +1,5 @@
 use crate::error::Res;
+use crate::authentication::callback::CALLBACK_PORT;
 
 // oauth2
 const URL: &str = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize";
@@ -21,12 +22,14 @@ const CODE_CHALLENGE_METHOD: &str = "S256";
 
 /// Non-blocking call opening oauth2 permission page in default browser
 pub fn launch_oauth2(csrf: String, pkce: String) -> Res<()> {
+
+    let redirect_uri = format!("{REDIRECT_URI}:{}", CALLBACK_PORT);
     open::that(
         format!(
             "{URL}?\
             client_id={CLIENT_ID}&\
             response_type={RESPONSE_TYPE}&\
-            redirect_uri={REDIRECT_URI}&\
+            redirect_uri={redirect_uri}&\
             response_mode={RESPONSE_MODE}&\
             scope={SCOPE}&\
             state={csrf}&\
