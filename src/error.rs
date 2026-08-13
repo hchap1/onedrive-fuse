@@ -4,3 +4,5 @@ use thiserror::Error;
 pub enum Error {
     
 }
+
+pub type Res<T> = Result<T, Error>;
