@@ -4,12 +4,16 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+async-channel = "2.5.0"
 axum = "0.8.9"
+axum-server = "0.8.0"
 base64 = "0.23.1"
 open = "5.4.1"
 rand = "0.10.2"
 reqwest = "0.13.4"
+serde = { version = "1.0.229", features = ["derive"] }
 sha2 = "0.11.0"
 thiserror = "2.0.20"
 tokio = { version = "1.53.1", features = ["macros", "rt", "rt-multi-thread"] }
 url = "2.5.8"
+urlencoding = "2.1.3"

@@ -13,7 +13,9 @@ async fn main() -> Res<()> {
    let (verifier, challenge) = generate_pkce(); 
    let state = generate_csrf();
 
-   launch_oauth2(state, challenge)?;
-   callback().await?;
+   launch_oauth2(state.clone(), challenge)?;
+   let res = callback().await?;
+   println!("{res:?}");
+   println!("{state}");
    Ok(())
 }
