@@ -1,6 +1,6 @@
 use std::net::SocketAddr;
+use std::time::Duration;
 
-use async_channel::Receiver;
 use async_channel::Sender;
 use axum::Form;
 use axum::extract::State;
@@ -74,7 +74,7 @@ impl CallbackAgent {
             Some(err_msg) => {
                 let auth_url = format!("/error?error={}", urlencoding::encode(&err_msg));
                 Redirect::to(&auth_url).into_response()
-            }
+            },
             None => Redirect::to("/success").into_response(),
         }
     }
@@ -95,28 +95,22 @@ pub async fn callback() -> Res<tokens::TemporaryToken> {
 
     // axum-server handle to shutdown once a code is parsed
     let handle = Handle::new();
-    let callback_handle = tokio::spawn(await_callback(receiver, handle.clone()));
 
     // bind to the specified port on all available interfaces
     let addr = SocketAddr::from(([0, 0, 0, 0], CALLBACK_PORT));
-    axum_server::bind(addr)
-        .handle(handle)
+
+    let webserver = tokio::spawn(axum_server::bind(addr)
+        .handle(handle.clone())
         .serve(app.into_make_service())
-        .await?;
+    );
 
-    callback_handle.await?
-}
+    let ret = receiver.recv().await?;
 
-async fn await_callback<A: axum_server::Address>(
-    receiver: Receiver<Res<tokens::TemporaryToken>>, handle: Handle<A>
-) -> Res<tokens::TemporaryToken> {
-
-    // await the receiver to do something
-    let res = receiver.recv().await;
-    
-    // regardless of result, always shut down webserver, 2 sec deadline for remaining conns
-    handle.graceful_shutdown(Some(std::time::Duration::from_secs(2)));
-    res?
+    // give 2 secs to load redirect before shutdown
+    tokio::time::sleep(Duration::from_secs(2)).await;
+    handle.graceful_shutdown(Some(Duration::from_secs(2)));
+    webserver.await??;
+    ret
 }
 
 async fn success_page() -> Html<&'static str> {
